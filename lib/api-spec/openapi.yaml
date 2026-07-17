@@ -3,20 +3,40 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Politics & War multiplayer strategy game API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication
+  - name: nations
+    description: Nation management
+  - name: cities
+    description: City infrastructure
+  - name: military
+    description: Military units and operations
+  - name: wars
+    description: Wars and battles
+  - name: alliances
+    description: Alliance management
+  - name: market
+    description: Resource market and trading
+  - name: diplomacy
+    description: Diplomatic messages
+  - name: map
+    description: World map
+  - name: leaderboard
+    description: Rankings and stats
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +44,1595 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ─── AUTH ───────────────────────────────────────────────────────────────────
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Register account and create nation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Username or nation name already taken
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user and nation
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ─── NATIONS ────────────────────────────────────────────────────────────────
+  /nations:
+    get:
+      operationId: listNations
+      tags: [nations]
+      summary: List all nations
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NationListResponse"
+
+  /nations/me:
+    get:
+      operationId: getMyNation
+      tags: [nations]
+      summary: Get my nation (full detail)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NationDetail"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    patch:
+      operationId: updateMyNation
+      tags: [nations]
+      summary: Update my nation settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NationUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NationDetail"
+
+  /nations/me/collect-taxes:
+    post:
+      operationId: collectTaxes
+      tags: [nations]
+      summary: Collect taxes (available every 2 hours)
+      responses:
+        "200":
+          description: Taxes collected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaxCollectResult"
+        "400":
+          description: Too soon to collect
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /nations/me/change-government:
+    post:
+      operationId: changeGovernment
+      tags: [nations]
+      summary: Change government type
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GovernmentChangeInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NationDetail"
+        "400":
+          description: Invalid government type or cooldown active
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /nations/{nationId}:
+    get:
+      operationId: getNation
+      tags: [nations]
+      summary: Get a nation by ID
+      parameters:
+        - name: nationId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NationDetail"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ─── CITIES ─────────────────────────────────────────────────────────────────
+  /nations/me/cities:
+    get:
+      operationId: getMyCities
+      tags: [cities]
+      summary: List my cities
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/City"
+
+    post:
+      operationId: buildCity
+      tags: [cities]
+      summary: Build a new city (costs money)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CityInput"
+      responses:
+        "201":
+          description: City built
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/City"
+        "400":
+          description: Insufficient funds or max cities reached
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /nations/{nationId}/cities:
+    get:
+      operationId: getCities
+      tags: [cities]
+      summary: Get cities for a nation
+      parameters:
+        - name: nationId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/City"
+
+  /nations/me/cities/{cityId}/improve:
+    post:
+      operationId: improveCity
+      tags: [cities]
+      summary: Upgrade infrastructure/commerce/industry in a city
+      parameters:
+        - name: cityId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CityImprovementInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/City"
+        "400":
+          description: Insufficient funds
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ─── MILITARY ───────────────────────────────────────────────────────────────
+  /nations/me/military:
+    get:
+      operationId: getMyMilitary
+      tags: [military]
+      summary: Get my military
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Military"
+
+  /nations/{nationId}/military:
+    get:
+      operationId: getMilitary
+      tags: [military]
+      summary: Get a nation's military (public info)
+      parameters:
+        - name: nationId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MilitaryPublic"
+
+  /nations/me/military/buy:
+    post:
+      operationId: buyMilitary
+      tags: [military]
+      summary: Purchase military units
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MilitaryPurchaseInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Military"
+        "400":
+          description: Insufficient funds or resources
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /nations/me/military/sell:
+    post:
+      operationId: sellMilitary
+      tags: [military]
+      summary: Disband/sell military units
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MilitaryPurchaseInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Military"
+
+  # ─── WARS ───────────────────────────────────────────────────────────────────
+  /wars:
+    get:
+      operationId: listWars
+      tags: [wars]
+      summary: List active wars (optionally filtered to a nation)
+      parameters:
+        - name: nationId
+          in: query
+          schema:
+            type: integer
+        - name: active
+          in: query
+          schema:
+            type: boolean
+            default: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/War"
+
+    post:
+      operationId: declareWar
+      tags: [wars]
+      summary: Declare war on another nation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WarDeclarationInput"
+      responses:
+        "201":
+          description: War declared
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/War"
+        "400":
+          description: Cannot declare war (beige protection, in alliance, already at war, etc.)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /wars/{warId}:
+    get:
+      operationId: getWar
+      tags: [wars]
+      summary: Get war details
+      parameters:
+        - name: warId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WarDetail"
+
+  /wars/{warId}/attack:
+    post:
+      operationId: performAttack
+      tags: [wars]
+      summary: Perform an attack in a war
+      parameters:
+        - name: warId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AttackInput"
+      responses:
+        "200":
+          description: Attack result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AttackResult"
+        "400":
+          description: Invalid attack (no action points, wrong units, etc.)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /wars/{warId}/peace:
+    post:
+      operationId: offerPeace
+      tags: [wars]
+      summary: Offer or accept peace
+      parameters:
+        - name: warId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PeaceInput"
+      responses:
+        "200":
+          description: Peace offered or accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/War"
+
+  # ─── ALLIANCES ──────────────────────────────────────────────────────────────
+  /alliances:
+    get:
+      operationId: listAlliances
+      tags: [alliances]
+      summary: List all alliances
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AllianceSummary"
+
+    post:
+      operationId: createAlliance
+      tags: [alliances]
+      summary: Create a new alliance
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AllianceInput"
+      responses:
+        "201":
+          description: Alliance created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AllianceDetail"
+        "400":
+          description: Already in an alliance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /alliances/{allianceId}:
+    get:
+      operationId: getAlliance
+      tags: [alliances]
+      summary: Get alliance details
+      parameters:
+        - name: allianceId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AllianceDetail"
+
+  /alliances/{allianceId}/apply:
+    post:
+      operationId: applyToAlliance
+      tags: [alliances]
+      summary: Apply to join an alliance
+      parameters:
+        - name: allianceId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AllianceApplicationInput"
+      responses:
+        "200":
+          description: Application submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /alliances/{allianceId}/applications/{nationId}:
+    put:
+      operationId: respondToApplication
+      tags: [alliances]
+      summary: Accept or reject a membership application
+      parameters:
+        - name: allianceId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: nationId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApplicationResponseInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /alliances/{allianceId}/leave:
+    post:
+      operationId: leaveAlliance
+      tags: [alliances]
+      summary: Leave an alliance
+      parameters:
+        - name: allianceId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Left alliance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  # ─── MARKET ─────────────────────────────────────────────────────────────────
+  /market:
+    get:
+      operationId: listMarketOffers
+      tags: [market]
+      summary: List market offers
+      parameters:
+        - name: resource
+          in: query
+          schema:
+            type: string
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [buy, sell]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MarketOffer"
+
+    post:
+      operationId: createMarketOffer
+      tags: [market]
+      summary: Post a buy or sell offer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MarketOfferInput"
+      responses:
+        "201":
+          description: Offer created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MarketOffer"
+        "400":
+          description: Insufficient resources or funds
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /market/{offerId}:
+    delete:
+      operationId: cancelMarketOffer
+      tags: [market]
+      summary: Cancel an offer you posted
+      parameters:
+        - name: offerId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Cancelled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /market/{offerId}/buy:
+    post:
+      operationId: acceptMarketOffer
+      tags: [market]
+      summary: Accept / purchase a market offer
+      parameters:
+        - name: offerId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MarketAcceptInput"
+      responses:
+        "200":
+          description: Trade completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TradeResult"
+        "400":
+          description: Insufficient funds or offer expired
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ─── DIPLOMACY / MESSAGES ───────────────────────────────────────────────────
+  /messages:
+    get:
+      operationId: listMessages
+      tags: [diplomacy]
+      summary: List diplomatic messages (inbox + sent)
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [inbox, sent]
+            default: inbox
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DiplomaticMessage"
+
+    post:
+      operationId: sendMessage
+      tags: [diplomacy]
+      summary: Send a diplomatic message to a nation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MessageInput"
+      responses:
+        "201":
+          description: Message sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiplomaticMessage"
+
+  /messages/{messageId}:
+    get:
+      operationId: getMessage
+      tags: [diplomacy]
+      summary: Get a message
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiplomaticMessage"
+
+  # ─── MAP ────────────────────────────────────────────────────────────────────
+  /map:
+    get:
+      operationId: getWorldMap
+      tags: [map]
+      summary: Get all nations with map coordinates
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MapNation"
+
+  # ─── LEADERBOARD / STATS ────────────────────────────────────────────────────
+  /leaderboard:
+    get:
+      operationId: getLeaderboard
+      tags: [leaderboard]
+      summary: Top nations ranked by score
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [score, military, economy, cities]
+            default: score
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LeaderboardEntry"
+
+  /stats:
+    get:
+      operationId: getGlobalStats
+      tags: [leaderboard]
+      summary: Global game statistics
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GlobalStats"
+
 components:
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
         status:
           type: string
-      required:
-        - status
 
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    SuccessResponse:
+      type: object
+      required: [success]
+      properties:
+        success:
+          type: boolean
+        message:
+          type: ["string", "null"]
+
+    # ─── AUTH ────────────────────────────────────────────────────────────────
+    RegisterInput:
+      type: object
+      required: [username, password, nationName, leaderName, continent, governmentType]
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 32
+        password:
+          type: string
+          minLength: 6
+        nationName:
+          type: string
+          minLength: 2
+          maxLength: 50
+        leaderName:
+          type: string
+          minLength: 2
+          maxLength: 50
+        continent:
+          type: string
+          enum: [North America, South America, Europe, Africa, Asia, Australia, Antarctica]
+        governmentType:
+          type: string
+          enum: [Democracy, Republic, Monarchy, Dictatorship, Communist, Theocracy, Oligarchy, Anarchy]
+        flag:
+          type: ["string", "null"]
+
+    LoginInput:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+
+    AuthResponse:
+      type: object
+      required: [user, nation]
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        nation:
+          $ref: "#/components/schemas/NationDetail"
+
+    User:
+      type: object
+      required: [id, username, createdAt]
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    # ─── NATION ──────────────────────────────────────────────────────────────
+    NationSummary:
+      type: object
+      required: [id, name, leaderName, continent, governmentType, score, cityCount, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        leaderName:
+          type: string
+        continent:
+          type: string
+        governmentType:
+          type: string
+        score:
+          type: number
+        cityCount:
+          type: integer
+        flag:
+          type: ["string", "null"]
+        allianceId:
+          type: ["integer", "null"]
+        allianceName:
+          type: ["string", "null"]
+        beigeUntil:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    NationDetail:
+      type: object
+      required: [id, name, leaderName, continent, governmentType, score, cityCount, population, gdp, taxRate, taxCollectedAt, resources, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        leaderName:
+          type: string
+        continent:
+          type: string
+        governmentType:
+          type: string
+        score:
+          type: number
+        cityCount:
+          type: integer
+        population:
+          type: integer
+        gdp:
+          type: number
+        taxRate:
+          type: number
+        taxCollectedAt:
+          type: ["string", "null"]
+          format: date-time
+        resources:
+          $ref: "#/components/schemas/Resources"
+        flag:
+          type: ["string", "null"]
+        allianceId:
+          type: ["integer", "null"]
+        allianceName:
+          type: ["string", "null"]
+        beigeUntil:
+          type: ["string", "null"]
+          format: date-time
+        warPolicy:
+          type: string
+        domesticPolicy:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    NationListResponse:
+      type: object
+      required: [nations, total]
+      properties:
+        nations:
+          type: array
+          items:
+            $ref: "#/components/schemas/NationSummary"
+        total:
+          type: integer
+
+    NationUpdate:
+      type: object
+      properties:
+        leaderName:
+          type: string
+        flag:
+          type: string
+        taxRate:
+          type: number
+        warPolicy:
+          type: string
+          enum: [Attrition, Turtle, Blitzkrieg, Fortress, Pirate, Arcane]
+        domesticPolicy:
+          type: string
+          enum: [Manifest Destiny, Open Markets, Technological Advancement, Imperialism, Open Borders, Urbanization]
+
+    GovernmentChangeInput:
+      type: object
+      required: [governmentType]
+      properties:
+        governmentType:
+          type: string
+          enum: [Democracy, Republic, Monarchy, Dictatorship, Communist, Theocracy, Oligarchy, Anarchy]
+
+    TaxCollectResult:
+      type: object
+      required: [moneyCollected, nextAvailableAt]
+      properties:
+        moneyCollected:
+          type: number
+        nextAvailableAt:
+          type: string
+          format: date-time
+        resources:
+          $ref: "#/components/schemas/Resources"
+
+    Resources:
+      type: object
+      required: [money, food, coal, oil, iron, bauxite, lead, uranium, gasoline, steel, munitions, aluminum]
+      properties:
+        money:
+          type: number
+        food:
+          type: number
+        coal:
+          type: number
+        oil:
+          type: number
+        iron:
+          type: number
+        bauxite:
+          type: number
+        lead:
+          type: number
+        uranium:
+          type: number
+        gasoline:
+          type: number
+        steel:
+          type: number
+        munitions:
+          type: number
+        aluminum:
+          type: number
+
+    # ─── CITIES ──────────────────────────────────────────────────────────────
+    City:
+      type: object
+      required: [id, nationId, name, infrastructure, land, commerce, industry, createdAt]
+      properties:
+        id:
+          type: integer
+        nationId:
+          type: integer
+        name:
+          type: string
+        infrastructure:
+          type: number
+        land:
+          type: number
+        commerce:
+          type: integer
+        industry:
+          type: integer
+        population:
+          type: integer
+        income:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+
+    CityInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 50
+
+    CityImprovementInput:
+      type: object
+      required: [type, amount]
+      properties:
+        type:
+          type: string
+          enum: [infrastructure, land, commerce, industry]
+        amount:
+          type: number
+
+    # ─── MILITARY ────────────────────────────────────────────────────────────
+    Military:
+      type: object
+      required: [nationId, soldiers, tanks, aircraft, ships, missiles, nukes, actionPointsUsed]
+      properties:
+        nationId:
+          type: integer
+        soldiers:
+          type: integer
+        tanks:
+          type: integer
+        aircraft:
+          type: integer
+        ships:
+          type: integer
+        missiles:
+          type: integer
+        nukes:
+          type: integer
+        actionPointsUsed:
+          type: integer
+
+    MilitaryPublic:
+      type: object
+      required: [nationId, soldiers, tanks, aircraft, ships]
+      properties:
+        nationId:
+          type: integer
+        soldiers:
+          type: integer
+        tanks:
+          type: integer
+        aircraft:
+          type: integer
+        ships:
+          type: integer
+
+    MilitaryPurchaseInput:
+      type: object
+      properties:
+        soldiers:
+          type: integer
+          default: 0
+        tanks:
+          type: integer
+          default: 0
+        aircraft:
+          type: integer
+          default: 0
+        ships:
+          type: integer
+          default: 0
+        missiles:
+          type: integer
+          default: 0
+        nukes:
+          type: integer
+          default: 0
+
+    # ─── WARS ────────────────────────────────────────────────────────────────
+    War:
+      type: object
+      required: [id, attackerId, defenderId, attackerName, defenderName, status, attackerWarScore, defenderWarScore, reason, startedAt]
+      properties:
+        id:
+          type: integer
+        attackerId:
+          type: integer
+        defenderId:
+          type: integer
+        attackerName:
+          type: string
+        defenderName:
+          type: string
+        status:
+          type: string
+          enum: [active, peace_offered, ended]
+        attackerWarScore:
+          type: number
+        defenderWarScore:
+          type: number
+        reason:
+          type: string
+        peaceOfferedBy:
+          type: ["integer", "null"]
+        startedAt:
+          type: string
+          format: date-time
+        endedAt:
+          type: ["string", "null"]
+          format: date-time
+
+    WarDetail:
+      type: object
+      required: [war, attacks]
+      properties:
+        war:
+          $ref: "#/components/schemas/War"
+        attacks:
+          type: array
+          items:
+            $ref: "#/components/schemas/Attack"
+
+    WarDeclarationInput:
+      type: object
+      required: [targetNationId, reason]
+      properties:
+        targetNationId:
+          type: integer
+        reason:
+          type: string
+          maxLength: 200
+
+    AttackInput:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [ground, airstrike, naval, missile, nuke]
+
+    AttackResult:
+      type: object
+      required: [attack, attackerCasualties, defenderCasualties, infraDestroyed, warScore]
+      properties:
+        attack:
+          $ref: "#/components/schemas/Attack"
+        attackerCasualties:
+          $ref: "#/components/schemas/MilitaryPurchaseInput"
+        defenderCasualties:
+          $ref: "#/components/schemas/MilitaryPurchaseInput"
+        infraDestroyed:
+          type: number
+        warScore:
+          type: number
+        looted:
+          $ref: "#/components/schemas/Resources"
+
+    Attack:
+      type: object
+      required: [id, warId, attackerNationId, type, outcome, attackerCasualties, defenderCasualties, infraDestroyed, createdAt]
+      properties:
+        id:
+          type: integer
+        warId:
+          type: integer
+        attackerNationId:
+          type: integer
+        type:
+          type: string
+        outcome:
+          type: string
+          enum: [pyrrhic_victory, moderate_success, immense_triumph, utter_failure]
+        attackerCasualties:
+          type: integer
+        defenderCasualties:
+          type: integer
+        infraDestroyed:
+          type: number
+        moneyLooted:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+
+    PeaceInput:
+      type: object
+      required: [action]
+      properties:
+        action:
+          type: string
+          enum: [offer, accept, reject]
+
+    # ─── ALLIANCES ───────────────────────────────────────────────────────────
+    AllianceSummary:
+      type: object
+      required: [id, name, acronym, memberCount, score, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        acronym:
+          type: string
+        memberCount:
+          type: integer
+        score:
+          type: number
+        flag:
+          type: ["string", "null"]
+        forumUrl:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    AllianceDetail:
+      type: object
+      required: [id, name, acronym, members, score, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        acronym:
+          type: string
+        description:
+          type: ["string", "null"]
+        flag:
+          type: ["string", "null"]
+        forumUrl:
+          type: ["string", "null"]
+        score:
+          type: number
+        members:
+          type: array
+          items:
+            $ref: "#/components/schemas/AllianceMember"
+        pendingApplications:
+          type: array
+          items:
+            $ref: "#/components/schemas/AllianceMember"
+        createdAt:
+          type: string
+          format: date-time
+
+    AllianceMember:
+      type: object
+      required: [nationId, nationName, leaderName, role, joinedAt]
+      properties:
+        nationId:
+          type: integer
+        nationName:
+          type: string
+        leaderName:
+          type: string
+        role:
+          type: string
+          enum: [leader, officer, member, applicant]
+        score:
+          type: number
+        joinedAt:
+          type: string
+          format: date-time
+
+    AllianceInput:
+      type: object
+      required: [name, acronym]
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+        acronym:
+          type: string
+          minLength: 2
+          maxLength: 8
+        description:
+          type: string
+          maxLength: 1000
+        flag:
+          type: string
+        forumUrl:
+          type: string
+
+    AllianceApplicationInput:
+      type: object
+      properties:
+        message:
+          type: string
+          maxLength: 500
+
+    ApplicationResponseInput:
+      type: object
+      required: [accepted]
+      properties:
+        accepted:
+          type: boolean
+
+    # ─── MARKET ──────────────────────────────────────────────────────────────
+    MarketOffer:
+      type: object
+      required: [id, nationId, nationName, offerType, resource, quantity, pricePerUnit, createdAt]
+      properties:
+        id:
+          type: integer
+        nationId:
+          type: integer
+        nationName:
+          type: string
+        offerType:
+          type: string
+          enum: [buy, sell]
+        resource:
+          type: string
+        quantity:
+          type: number
+        pricePerUnit:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+
+    MarketOfferInput:
+      type: object
+      required: [offerType, resource, quantity, pricePerUnit]
+      properties:
+        offerType:
+          type: string
+          enum: [buy, sell]
+        resource:
+          type: string
+          enum: [food, coal, oil, iron, bauxite, lead, uranium, gasoline, steel, munitions, aluminum]
+        quantity:
+          type: number
+        pricePerUnit:
+          type: number
+
+    MarketAcceptInput:
+      type: object
+      required: [quantity]
+      properties:
+        quantity:
+          type: number
+
+    TradeResult:
+      type: object
+      required: [resource, quantity, totalCost]
+      properties:
+        resource:
+          type: string
+        quantity:
+          type: number
+        totalCost:
+          type: number
+        updatedResources:
+          $ref: "#/components/schemas/Resources"
+
+    # ─── DIPLOMACY ───────────────────────────────────────────────────────────
+    DiplomaticMessage:
+      type: object
+      required: [id, fromNationId, fromNationName, toNationId, toNationName, subject, body, read, createdAt]
+      properties:
+        id:
+          type: integer
+        fromNationId:
+          type: integer
+        fromNationName:
+          type: string
+        toNationId:
+          type: integer
+        toNationName:
+          type: string
+        subject:
+          type: string
+        body:
+          type: string
+        read:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    MessageInput:
+      type: object
+      required: [toNationId, subject, body]
+      properties:
+        toNationId:
+          type: integer
+        subject:
+          type: string
+          maxLength: 100
+        body:
+          type: string
+          maxLength: 5000
+
+    # ─── MAP ─────────────────────────────────────────────────────────────────
+    MapNation:
+      type: object
+      required: [id, name, leaderName, continent, governmentType, score, cityCount, mapX, mapY]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        leaderName:
+          type: string
+        continent:
+          type: string
+        governmentType:
+          type: string
+        score:
+          type: number
+        cityCount:
+          type: integer
+        flag:
+          type: ["string", "null"]
+        allianceId:
+          type: ["integer", "null"]
+        allianceName:
+          type: ["string", "null"]
+        mapX:
+          type: number
+        mapY:
+          type: number
+
+    # ─── LEADERBOARD ─────────────────────────────────────────────────────────
+    LeaderboardEntry:
+      type: object
+      required: [rank, nationId, nationName, leaderName, allianceName, score, cityCount]
+      properties:
+        rank:
+          type: integer
+        nationId:
+          type: integer
+        nationName:
+          type: string
+        leaderName:
+          type: string
+        allianceName:
+          type: ["string", "null"]
+        score:
+          type: number
+        cityCount:
+          type: integer
+        militaryScore:
+          type: number
+        economyScore:
+          type: number
+
+    GlobalStats:
+      type: object
+      required: [totalNations, totalAlliances, activeWars, totalCities]
+      properties:
+        totalNations:
+          type: integer
+        totalAlliances:
+          type: integer
+        activeWars:
+          type: integer
+        totalCities:
+          type: integer
+        totalMoney:
+          type: number

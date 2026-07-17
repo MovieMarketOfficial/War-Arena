@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "Politics & War"
+version = "1.0.0"
+id = "artifacts/politics-and-war"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24325
+
+[services.development]
+run = "pnpm --filter @workspace/politics-and-war run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/politics-and-war", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/politics-and-war/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24325"
+BASE_PATH = "/"
