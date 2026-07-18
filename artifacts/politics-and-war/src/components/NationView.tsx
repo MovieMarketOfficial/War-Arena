@@ -6,10 +6,7 @@ import { DeclareWarDialog } from "@/components/DeclareWarDialog";
 import { SendMessageDialog } from "@/components/SendMessageDialog";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Line } from "recharts";
 import { Banknote, TrendingUp, Home, Shield, Globe, Building2, Factory, Info, ChevronDown, ChevronUp, Crosshair, Map as MapIcon } from "lucide-react";
-
-const NAV_BG = "#1a237e";
-const LINK_BLUE = "#1565c0";
-const ROW_ALT = "#e8eaf6";
+import "./NationView.css";
 
 const RESOURCES = [
   { key: "money", label: "Money", emoji: "💵" },
@@ -38,63 +35,25 @@ const MILITARY_UNITS = [
 
 function SectionHeader({ icon, title, open, onClick }: { icon: React.ReactNode; title: string; open: boolean; onClick?: () => void }) {
   return (
-    <div
-      onClick={onClick}
-      style={{
-        backgroundColor: NAV_BG,
-        color: "white",
-        padding: "10px 12px",
-        fontWeight: 600,
-        fontSize: 15,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        cursor: onClick ? "pointer" : "default",
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+    <div onClick={onClick} className={`section-header ${onClick ? "" : "section-header-static"}`}>
+      <div className="section-header-title">
         {icon}
         {title}
       </div>
-      {onClick && (open ? <ChevronUp size={18} /> : <ChevronDown size={18} />)}
+      {onClick && <div className="section-header-chevron">{open ? <ChevronUp size={18} /> : <ChevronDown size={18} />}</div>}
     </div>
   );
 }
 
 function StatRow({ label, value, info, isAlt, icon }: { label: string; value: React.ReactNode; info?: boolean; isAlt?: boolean; icon?: string }) {
   return (
-    <div style={{
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      padding: "8px 12px",
-      backgroundColor: isAlt ? ROW_ALT : "#fff",
-      borderBottom: "1px solid #e0e0e0",
-      fontSize: 14,
-    }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 6, color: "#212121" }}>
-        {icon && <span style={{ fontSize: 18 }}>{icon}</span>}
+    <div className={`stat-row ${isAlt ? "stat-row-alt" : ""}`}>
+      <div className="stat-label">
+        {icon && <span className="stat-label-icon">{icon}</span>}
         {label}
-        {info && <Info size={14} color={LINK_BLUE} style={{ marginLeft: 2 }} />}
+        {info && <Info size={14} className="stat-info" />}
       </div>
-      <div style={{ fontWeight: 600, color: "#212121", textAlign: "right" }}>{value}</div>
-    </div>
-  );
-}
-
-function TwoColStat({ label, value, isAlt }: { label: string; value: React.ReactNode; isAlt?: boolean }) {
-  return (
-    <div style={{
-      padding: "8px 12px",
-      backgroundColor: isAlt ? ROW_ALT : "#fff",
-      borderBottom: "1px solid #e0e0e0",
-      borderRight: "1px solid #e0e0e0",
-      fontSize: 14,
-      display: "flex",
-      flexDirection: "column",
-    }}>
-      <span style={{ color: "#555", fontSize: 12 }}>{label}</span>
-      <span style={{ fontWeight: 600, color: "#212121" }}>{value}</span>
+      <div className="stat-value">{value}</div>
     </div>
   );
 }
@@ -103,8 +62,8 @@ function MiniMap({ x, y, name }: { x: number; y: number; name: string }) {
   const markerX = Math.max(0, Math.min(100, ((x + 180) / 360) * 100));
   const markerY = Math.max(0, Math.min(100, ((-y + 90) / 180) * 100));
   return (
-    <div style={{ position: "relative", height: 220, background: "linear-gradient(180deg, #a8d8ea 0%, #d4f1f9 40%, #f0f8c8 60%, #c8e6a0 100%)", borderRadius: 2, overflow: "hidden" }}>
-      <svg width="100%" height="100%" style={{ position: "absolute", inset: 0 }}>
+    <div className="map-container">
+      <svg className="map-grid">
         <defs>
           <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
             <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(0,0,0,0.08)" strokeWidth="1" />
@@ -113,19 +72,7 @@ function MiniMap({ x, y, name }: { x: number; y: number; name: string }) {
         <rect width="100%" height="100%" fill="url(#grid)" />
         <circle cx={`${markerX}%`} cy={`${markerY}%`} r="6" fill="#c62828" stroke="white" strokeWidth="2" />
       </svg>
-      <div style={{
-        position: "absolute",
-        left: `calc(${markerX}% - 40px)`,
-        top: `calc(${markerY}% - 30px)`,
-        backgroundColor: "rgba(0,0,0,0.7)",
-        color: "white",
-        padding: "3px 8px",
-        borderRadius: 3,
-        fontSize: 12,
-        fontWeight: 600,
-        pointerEvents: "none",
-        whiteSpace: "nowrap",
-      }}>
+      <div className="map-marker" style={{ left: `${markerX}%`, top: `${markerY}%` }}>
         {name}
       </div>
     </div>
@@ -141,16 +88,13 @@ function ScoreChart({ score }: { score: number }) {
       const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
       const growth = Math.pow(i / days, 1.5);
       const value = Math.max(0, score * (0.4 + 0.6 * growth) + (Math.random() - 0.5) * score * 0.05);
-      points.push({
-        date: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-        score: Math.round(value * 100) / 100,
-      });
+      points.push({ date: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }), score: Math.round(value * 100) / 100 });
     }
     return points;
   }, [score]);
 
   return (
-    <div style={{ height: 220, padding: "8px 0" }}>
+    <div className="score-chart">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} margin={{ top: 5, right: 8, left: 0, bottom: 0 }}>
           <defs>
@@ -162,9 +106,7 @@ function ScoreChart({ score }: { score: number }) {
           <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
           <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="#757575" />
           <YAxis tick={{ fontSize: 11 }} stroke="#757575" width={40} />
-          <Tooltip
-            contentStyle={{ fontSize: 12, borderRadius: 4, border: "1px solid #e0e0e0" }}
-            formatter={(value: number) => [value.toLocaleString(), "Score"]} />
+          <Tooltip contentStyle={{ fontSize: 12, borderRadius: 4, border: "1px solid #e0e0e0" }} formatter={(value: number) => [value.toLocaleString(), "Score"]} />
           <Area type="monotone" dataKey="score" stroke="#c62828" strokeWidth={2} fill="url(#colorScore)" />
           <Line type="monotone" dataKey="score" stroke="#c62828" strokeWidth={2} dot={{ r: 3, strokeWidth: 2, fill: "#c62828" }} />
         </AreaChart>
@@ -206,15 +148,14 @@ export default function NationView({ nationId, isMe: propIsMe }: NationViewProps
 
   const toggle = (key: string) => setOpenSections(s => ({ ...s, [key]: !s[key] }));
 
-  if (isLoading) return <div style={{ padding: 20, color: "#757575" }}>Loading nation…</div>;
-  if (!nation) return <div style={{ padding: 20, color: "#757575" }}>Nation not found.</div>;
+  if (isLoading) return <div className="loading-state">Loading nation…</div>;
+  if (!nation) return <div className="not-found">Nation not found.</div>;
 
   const totalInfra = (cities ?? []).reduce((s, c) => s + (c.infrastructure || 0), 0);
   const totalLand = (cities ?? []).reduce((s, c) => s + (c.land || 0), 0);
   const density = totalLand > 0 ? nation.population / totalLand : 0;
   const gdpPerCapita = nation.population > 0 ? nation.gdp / nation.population : 0;
   const gni = nation.gdp * 0.835;
-
   const visibleCities = showAllCities ? (cities ?? []) : (cities ?? []).slice(0, 3);
 
   const activity = [];
@@ -225,61 +166,45 @@ export default function NationView({ nationId, isMe: propIsMe }: NationViewProps
   activity.sort((a, b) => b.date.getTime() - a.date.getTime());
 
   const r = nation.resources as any;
+  const actionButtons = [
+    { label: "✉️ Message", action: () => setMessageDialogOpen(true) },
+    { label: "💲 Trade", href: "/market" },
+    { label: "⚔️ War", action: () => setWarDialogOpen(true), danger: true },
+    { label: "🚫 Embargo", href: "#" },
+    { label: "🕵️ Spy", href: "#" },
+    { label: "📖 Factbook", href: "#" },
+  ];
 
   return (
-    <div style={{ fontFamily: "'Outfit', sans-serif" }}>
-      {/* Title card */}
-      <div style={{
-        background: "linear-gradient(135deg, #e8eaf6 0%, #fff 60%)",
-        border: "1px solid #e0e0e0",
-        borderRadius: 3,
-        marginBottom: 12,
-        padding: "16px 12px",
-        position: "relative",
-      }}>
-        <div style={{ fontSize: 22, fontWeight: 700, color: NAV_BG, marginBottom: 4 }}>{nation.name}</div>
+    <div className="nation-view">
+      <div className="nation-title-card">
+        <div className="nation-name">{nation.name}</div>
         {nation.allianceName && (
-          <div style={{ marginBottom: 4 }}>
-            <Link href={`/alliances/${nation.allianceId}`} style={{ color: LINK_BLUE, fontSize: 13, textDecoration: "none" }}>
-              [{nation.allianceName}]
-            </Link>
+          <div className="nation-alliance">
+            <Link href={`/alliances/${nation.allianceId}`}>[{nation.allianceName}]</Link>
           </div>
         )}
-        <div style={{ fontSize: 13, color: "#555" }}>Leader: {nation.leaderName} · {nation.continent}</div>
+        <div className="nation-meta">Leader: {nation.leaderName} · {nation.continent}</div>
         {nation.beigeUntil && new Date(nation.beigeUntil) > new Date() && (
-          <div style={{ marginTop: 8, padding: "4px 10px", backgroundColor: "#fff8e1", border: "1px solid #ffe082", borderRadius: 3, display: "inline-block", fontSize: 12, color: "#f57f17" }}>
+          <div className="nation-beige">
             🛡️ Beige Mode — Protected until {new Date(nation.beigeUntil).toLocaleDateString()}
           </div>
         )}
       </div>
 
-      {/* Action buttons for other nations */}
       {!isMe && (
-        <div style={{ border: "1px solid #e0e0e0", borderRadius: 3, marginBottom: 12, overflow: "hidden" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr" }}>
-            {[
-              { label: "✉️ Message", action: () => setMessageDialogOpen(true) },
-              { label: "💲 Trade", href: "/market" },
-              { label: "⚔️ War", action: () => setWarDialogOpen(true), danger: true },
-              { label: "🚫 Embargo", href: "#" },
-              { label: "🕵️ Spy", href: "#" },
-              { label: "📖 Factbook", href: "#" },
-            ].map((btn, i, arr) => {
-              const style: React.CSSProperties = {
-                padding: "10px 4px", fontSize: 11, fontWeight: 500, textAlign: "center", cursor: "pointer",
-                borderRight: (i + 1) % 3 !== 0 ? "1px solid #e0e0e0" : "none",
-                borderBottom: i < arr.length - 3 ? "1px solid #e0e0e0" : "none",
-                color: btn.danger ? "#c62828" : "#333", backgroundColor: "white", display: "block", textDecoration: "none", lineHeight: 1.4,
-              };
-              if (btn.action) return <button key={btn.label} onClick={btn.action} style={{ ...style, border: "none" }}>{btn.label}</button>;
-              return <Link key={btn.label} href={btn.href!} style={style}>{btn.label}</Link>;
+        <div className="nation-section">
+          <div className="action-grid">
+            {actionButtons.map((btn) => {
+              const className = `action-btn ${btn.danger ? "action-btn-danger" : ""}`;
+              if (btn.action) return <button key={btn.label} onClick={btn.action} className={className}>{btn.label}</button>;
+              return <Link key={btn.label} href={btn.href!} className={className}>{btn.label}</Link>;
             })}
           </div>
         </div>
       )}
 
-      {/* Economic */}
-      <div style={{ border: "1px solid #e0e0e0", borderRadius: 3, marginBottom: 12, overflow: "hidden" }}>
+      <div className="nation-section">
         <SectionHeader icon={<Banknote size={18} />} title="Economic" open={openSections.economic} onClick={() => toggle("economic")} />
         {openSections.economic && (
           <div>
@@ -296,8 +221,7 @@ export default function NationView({ nationId, isMe: propIsMe }: NationViewProps
         )}
       </div>
 
-      {/* Domestic */}
-      <div style={{ border: "1px solid #e0e0e0", borderRadius: 3, marginBottom: 12, overflow: "hidden" }}>
+      <div className="nation-section">
         <SectionHeader icon={<Home size={18} />} title="Domestic" open={openSections.domestic} onClick={() => toggle("domestic")} />
         {openSections.domestic && (
           <div>
@@ -313,8 +237,7 @@ export default function NationView({ nationId, isMe: propIsMe }: NationViewProps
         )}
       </div>
 
-      {/* Military */}
-      <div style={{ border: "1px solid #e0e0e0", borderRadius: 3, marginBottom: 12, overflow: "hidden" }}>
+      <div className="nation-section">
         <SectionHeader icon={<Shield size={18} />} title="Military" open={openSections.military} onClick={() => toggle("military")} />
         {openSections.military && (
           <div>
@@ -324,18 +247,11 @@ export default function NationView({ nationId, isMe: propIsMe }: NationViewProps
             {MILITARY_UNITS.map((unit, i) => {
               const val = (military as any)?.[unit.key] ?? 0;
               return (
-                <div key={unit.key} style={{
-                  display: "flex", alignItems: "center",
-                  backgroundColor: i % 2 === 0 ? "#fff" : ROW_ALT,
-                  borderBottom: "1px solid #e0e0e0",
-                  padding: "8px 12px",
-                }}>
-                  <div style={{ fontSize: 28, marginRight: 12, width: 36, textAlign: "center" }}>{unit.img}</div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 600, fontSize: 14 }}>{unit.label}: {val.toLocaleString()}</div>
-                    <div style={{ fontSize: 13, color: "#555", fontStyle: "italic" }}>
-                      {unit.sub[0]}: 0 &nbsp; {unit.sub[1]}: 0
-                    </div>
+                <div key={unit.key} className={`military-unit ${i % 2 === 1 ? "military-unit-alt" : ""}`}>
+                  <div className="military-unit-icon">{unit.img}</div>
+                  <div className="military-unit-info">
+                    <div className="military-unit-name">{unit.label}: {val.toLocaleString()}</div>
+                    <div className="military-unit-sub">{unit.sub[0]}: 0 &nbsp; {unit.sub[1]}: 0</div>
                   </div>
                 </div>
               );
@@ -344,8 +260,7 @@ export default function NationView({ nationId, isMe: propIsMe }: NationViewProps
         )}
       </div>
 
-      {/* Nation Stats */}
-      <div style={{ border: "1px solid #e0e0e0", borderRadius: 3, marginBottom: 12, overflow: "hidden" }}>
+      <div className="nation-section">
         <SectionHeader icon={<TrendingUp size={18} />} title="Nation Stats" open={openSections.stats} onClick={() => toggle("stats")} />
         {openSections.stats && (
           <div>
@@ -358,55 +273,34 @@ export default function NationView({ nationId, isMe: propIsMe }: NationViewProps
         )}
       </div>
 
-      {/* Bounties */}
-      <div style={{ border: "1px solid #e0e0e0", borderRadius: 3, marginBottom: 12, overflow: "hidden" }}>
+      <div className="nation-section">
         <SectionHeader icon={<Crosshair size={18} />} title="Bounties" open={openSections.bounties} onClick={() => toggle("bounties")} />
-        {openSections.bounties && (
-          <div style={{ padding: "12px", fontSize: 14, color: "#555", backgroundColor: "#fff" }}>
-            There are no posted bounties on this nation.
-          </div>
-        )}
+        {openSections.bounties && <div className="empty-text">There are no posted bounties on this nation.</div>}
       </div>
 
-      {/* Map */}
-      <div style={{ border: "1px solid #e0e0e0", borderRadius: 3, marginBottom: 12, overflow: "hidden" }}>
+      <div className="nation-section">
         <SectionHeader icon={<MapIcon size={18} />} title="Map" open={openSections.map} onClick={() => toggle("map")} />
         {openSections.map && <MiniMap x={nation.mapX || 0} y={nation.mapY || 0} name={nation.name} />}
       </div>
 
-      {/* Cities */}
-      <div style={{ border: "1px solid #e0e0e0", borderRadius: 3, marginBottom: 12, overflow: "hidden" }}>
+      <div className="nation-section">
         <SectionHeader icon={<Building2 size={18} />} title={`${cities?.length ?? 0} Cities [M]`} open={openSections.cities} onClick={() => toggle("cities")} />
         {openSections.cities && (
           <div>
             {(cities ?? []).length === 0 ? (
-              <div style={{ padding: 12, color: "#757575", fontSize: 14 }}>No cities found.</div>
+              <div className="cities-empty">No cities found.</div>
             ) : (
               <>
                 {visibleCities.map((city, i) => (
-                  <div key={city.id} style={{
-                    display: "flex", justifyContent: "space-between",
-                    backgroundColor: i % 2 === 0 ? "#fff" : ROW_ALT,
-                    borderBottom: "1px solid #e0e0e0",
-                    padding: "8px 12px",
-                    fontSize: 14,
-                  }}>
-                    <Link href={isMe ? "/cities" : "#"} style={{ color: LINK_BLUE, fontWeight: 600, textDecoration: "none" }}>
-                      {city.name}
-                    </Link>
-                    <span style={{ color: "#212121" }}>
+                  <div key={city.id} className={`city-row ${i % 2 === 1 ? "city-row-alt" : ""}`}>
+                    <Link href={isMe ? "/cities" : "#"} className="city-name">{city.name}</Link>
+                    <span className="city-stats">
                       {city.infrastructure.toLocaleString(undefined, { maximumFractionDigits: 2 })} Infra, {((city.infrastructure || 0) * 100).toLocaleString()} People
                     </span>
                   </div>
                 ))}
                 {(cities ?? []).length > 3 && (
-                  <button
-                    onClick={() => setShowAllCities(s => !s)}
-                    style={{
-                      width: "100%", padding: "8px", backgroundColor: "#fff", border: "none",
-                      borderTop: "1px solid #e0e0e0", color: LINK_BLUE, fontSize: 13, cursor: "pointer",
-                    }}
-                  >
+                  <button onClick={() => setShowAllCities(s => !s)} className="show-more-btn">
                     {showAllCities ? "Show Less" : "Show More"}
                   </button>
                 )}
@@ -416,41 +310,37 @@ export default function NationView({ nationId, isMe: propIsMe }: NationViewProps
         )}
       </div>
 
-      {/* Nation Activity */}
-      <div style={{ border: "1px solid #e0e0e0", borderRadius: 3, marginBottom: 12, overflow: "hidden" }}>
+      <div className="nation-section">
         <SectionHeader icon={<Globe size={18} />} title="Nation Activity" open={openSections.activity} onClick={() => toggle("activity")} />
         {openSections.activity && (
-          <div style={{ padding: "12px", backgroundColor: "#fff" }}>
+          <div className="activity-list">
             {activity.slice(0, 5).map((item, i) => (
-              <div key={i} style={{ display: "flex", gap: 10, marginBottom: 10, fontSize: 14, color: "#212121" }}>
-                <span style={{ color: LINK_BLUE, fontWeight: 600, whiteSpace: "nowrap" }}>● {item.date.toLocaleString("en-US", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: true }).toLowerCase()}</span>
+              <div key={i} className="activity-row">
+                <span className="activity-date">
+                  ● {item.date.toLocaleString("en-US", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: true }).toLowerCase()}
+                </span>
                 <span>{item.text}</span>
               </div>
             ))}
-            {activity.length === 0 && <div style={{ color: "#757575" }}>No recent activity.</div>}
+            {activity.length === 0 && <div className="cities-empty">No recent activity.</div>}
           </div>
         )}
       </div>
 
-      {/* Score Over Time */}
-      <div style={{ border: "1px solid #e0e0e0", borderRadius: 3, marginBottom: 12, overflow: "hidden" }}>
+      <div className="nation-section">
         <SectionHeader icon={<TrendingUp size={18} />} title="Nation Score Over Time" open={openSections.score} onClick={() => toggle("score")} />
         {openSections.score && <ScoreChart score={nation.score} />}
       </div>
 
-      {/* Resources quick view for own nation */}
       {isMe && (
-        <div style={{ border: "1px solid #e0e0e0", borderRadius: 3, overflow: "hidden" }}>
+        <div className="nation-section">
           <SectionHeader icon={<Factory size={18} />} title="Resources" open={openSections.resources} onClick={() => toggle("resources")} />
           {openSections.resources && (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
+            <div className="resources-grid">
               {RESOURCES.map((res, i) => (
-                <div key={res.key} style={{
-                  padding: "8px 12px", borderBottom: "1px solid #e0e0e0", borderRight: i % 2 === 0 ? "1px solid #e0e0e0" : "none",
-                  backgroundColor: i % 2 === 0 ? "#fff" : ROW_ALT, fontSize: 13, display: "flex", justifyContent: "space-between",
-                }}>
+                <div key={res.key} className={`resource-cell ${i % 2 === 1 ? "resource-cell-alt" : ""}`}>
                   <span>{res.emoji} {res.label}</span>
-                  <span style={{ fontWeight: 600 }}>{(r[res.key] ?? 0).toLocaleString()}</span>
+                  <span className="resource-value">{(r[res.key] ?? 0).toLocaleString()}</span>
                 </div>
               ))}
             </div>
