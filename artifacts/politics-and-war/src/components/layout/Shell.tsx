@@ -301,26 +301,6 @@ export function Shell({ children }: { children: ReactNode }) {
         )}
       </div>
 
-      {/* ── BOTTOM RESOURCE BAR ── */}
-      <div style={{
-        backgroundColor: NAV_BG,
-        padding: "4px 8px 5px",
-        flexShrink: 0,
-        fontSize: 11,
-        color: "white",
-        lineHeight: 1.6,
-      }}>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "1px 10px" }}>
-          {RESOURCES_ROW1.map(res => (
-            <span key={res.key}>{res.emoji}&nbsp;{(r[res.key] ?? 0).toLocaleString()}</span>
-          ))}
-        </div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "1px 10px" }}>
-          {RESOURCES_ROW2.map(res => (
-            <span key={res.key}>{res.emoji}&nbsp;{(r[res.key] ?? 0).toLocaleString()}</span>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }
