@@ -1,0 +1,2 @@
+- [DB schema drift](db-schema-drift.md) — Live Postgres table shape may differ from split schema exports; inspect before restoring a missing table.
+- [Malformed SQL template literals](military-sql-template-literal.md) — Review every `sql` fragment in resource-update routes when costs or resources change.

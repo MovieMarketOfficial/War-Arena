@@ -1,5 +1,6 @@
 export * from "./users";
 export * from "./nations";
+export * from "./resources";
 export * from "./cities";
 export * from "./military";
 export * from "./wars";

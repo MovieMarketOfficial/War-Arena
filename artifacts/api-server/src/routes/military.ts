@@ -62,7 +62,7 @@ router.post("/nations/me/military/buy", requireAuth, async (req, res) => {
   if (steelNeeded) resourceUpdates.steel = sql`steel - ${steelNeeded}`;
   if (gasolineNeeded) resourceUpdates.gasoline = sql`gasoline - ${gasolineNeeded}`;
   if (munitionsNeeded) resourceUpdates.munitions = sql`munitions - ${munitionsNeeded}`;
-  if (aluminumNeeded) resourceUpdates.aluminum = sql`aluminumNeeded}`;
+  if (aluminumNeeded) resourceUpdates.aluminum = sql`aluminum - ${aluminumNeeded}`;
   if (uraniumNeeded) resourceUpdates.uranium = sql`uranium - ${uraniumNeeded}`;
 
   await db.update(resourcesTable).set(resourceUpdates).where(eq(resourcesTable.nationId, nationId));

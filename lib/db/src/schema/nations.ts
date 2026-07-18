@@ -28,4 +28,3 @@ export const nationsTable = pgTable("nations", {
 export const insertNationSchema = createInsertSchema(nationsTable).omit({ id: true, createdAt: true, score: true, population: true, gdp: true });
 export type InsertNation = z.infer<typeof insertNationSchema>;
 export type Nation = typeof nationsTable.$inferSelect;
-export type Resources = typeof resourcesTable.$inferSelect;

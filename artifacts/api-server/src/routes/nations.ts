@@ -156,5 +156,17 @@ router.get("/nations/:nationId", async (req, res) => {
   res.json(detail);
 });
 
+// GET /api/nations/:nationId/rank
+router.get("/nations/:nationId/rank", async (req, res) => {
+  const nationId = parseInt(req.params.nationId);
+  const [nation] = await db.select({ score: nationsTable.score }).from(nationsTable).where(eq(nationsTable.id, nationId));
+  if (!nation) { res.status(404).json({ error: "Nation not found" }); return; }
+  const [{ count: total }] = await db.select({ count: count() }).from(nationsTable);
+  const [{ count: higherOrEqual }] = await db.select({ count: count() }).from(nationsTable).where(sql`${nationsTable.score} > ${nation.score}`);
+  const rank = (higherOrEqual ?? 0) + 1;
+  const percentile = total > 0 ? (((rank - 1) / total) * 100).toFixed(2) : "0.00";
+  res.json({ nationId, rank, total, percentile });
+});
+
 export { getNationDetail };
 export default router;
